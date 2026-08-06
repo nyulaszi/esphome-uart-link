@@ -38,6 +38,7 @@ void UARTTCPClientComponent::setup() {
           (unsigned) len);
         self->last_rx_byte_time_ = millis();
         rx_packets_++;
+        rx_bytes_ += len;
       },
       this);
 
@@ -104,11 +105,11 @@ void UARTTCPClientComponent::loop() {
       ESP_LOGW(TAG, "'%s' no data for %ums (stall), forcing reconnect",
                name_.empty() ? "(no id)" : name_.c_str(), (unsigned) since_last_rx);
       ESP_LOGW(TAG,
-         "'%s' STALL after %u ms (TX=%u RX=%u)",
+         "'%s' STALL after %u ms (TX=%u pkts/%llu B, RX=%u pkts/%llu B)",
          name_.c_str(),
          (unsigned) since_last_rx,
-         tx_packets_,
-         rx_packets_);
+         tx_packets_, tx_bytes_,
+         rx_packets_, rx_bytes_);
       ESP_LOGW(TAG,
          "'%s' STALL %u ms -> reconnect",
          name_.c_str(),
@@ -168,7 +169,10 @@ void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
     ESP_LOGW(TAG, "'%s' write_array: only %u/%u bytes written",
              name_.empty() ? "(no id)" : name_.c_str(), (unsigned) written, (unsigned) len);
   }
-  tx_packets_++;
+  if (written > 0) {
+    tx_packets_++;
+    tx_bytes_ += written;
+  }
 }
 
 size_t UARTTCPClientComponent::available() {
