@@ -34,6 +34,8 @@ void UARTTCPClientComponent::setup() {
         auto *self = static_cast<UARTTCPClientComponent *>(arg);
         self->ring_.write(static_cast<uint8_t *>(data), len);
         self->last_rx_byte_time_ = millis();
+        rx_packets++;
+        rx_bytes += len;
       },
       this);
 
@@ -93,6 +95,8 @@ void UARTTCPClientComponent::loop() {
     if (since_last_rx > stall_timeout_ms_) {
       ESP_LOGW(TAG, "'%s' no data for %ums (stall), forcing reconnect",
                name_.empty() ? "(no id)" : name_.c_str(), (unsigned) since_last_rx);
+      ESP_LOGW(TAG, "TX packets since connect: '%u', in bytes: '%u'", name_.empty() ? "(no id)" : name_.c_str(), (unsigned) tx_packets, (unsigned) tx_bytes);
+      ESP_LOGW(TAG, "RX packets since connect: '%u', in bytes: '%u'", name_.empty() ? "(no id)" : name_.c_str(), (unsigned) rx_packets, (unsigned) rx_bytes);
       disconnect_();
       ring_.clear();
       has_peek_ = false;
@@ -141,6 +145,8 @@ void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
     ESP_LOGW(TAG, "'%s' write_array: only %u/%u bytes written",
              name_.empty() ? "(no id)" : name_.c_str(), (unsigned) written, (unsigned) len);
   }
+  tx_packets++;
+  tx_bytes += len;
 }
 
 size_t UARTTCPClientComponent::available() {
