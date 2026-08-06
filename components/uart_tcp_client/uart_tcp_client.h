@@ -64,6 +64,10 @@ class UARTTCPClientComponent : public uart::UARTComponent, public Component {
   // Stall detection
   uint32_t stall_timeout_ms_{15000};
   volatile uint32_t last_rx_byte_time_{0};
+
+  // Debug counters
+  uint32_t tx_packets_{0};
+  uint32_t rx_packets_{0};
 };
 
 }  // namespace esphome::uart_tcp_client
