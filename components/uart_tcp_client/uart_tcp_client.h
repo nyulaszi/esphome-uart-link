@@ -68,9 +68,10 @@ class UARTTCPClientComponent : public uart::UARTComponent, public Component {
   // Debug counters
   uint32_t tx_packets_{0};
   uint32_t rx_packets_{0};
-
   uint64_t tx_bytes_{0};
   uint64_t rx_bytes_{0};
+  uint32_t last_rx_byte_time_{0};
+  uint32_t last_tx_byte_time_{0};
 };
 
 }  // namespace esphome::uart_tcp_client
