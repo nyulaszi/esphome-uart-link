@@ -37,8 +37,8 @@ void UARTTCPClientComponent::setup() {
           self->name_.c_str(),
           (unsigned) len);
         self->last_rx_byte_time_ = millis();
-        rx_packets_++;
-        rx_bytes_ += len;
+        self->rx_packets_++;
+        self->rx_bytes_ += len;
       },
       this);
 
@@ -105,15 +105,30 @@ void UARTTCPClientComponent::loop() {
       ESP_LOGW(TAG, "'%s' no data for %ums (stall), forcing reconnect",
                name_.empty() ? "(no id)" : name_.c_str(), (unsigned) since_last_rx);
       ESP_LOGW(TAG,
-         "'%s' STALL after %u ms (TX=%u pkts/%llu B, RX=%u pkts/%llu B)",
-         name_.c_str(),
+         "STALL: idle=%u ms avail=%u connected=%d ack=%d tx=%llu rx=%llu",
          (unsigned) since_last_rx,
-         tx_packets_, tx_bytes_,
-         rx_packets_, rx_bytes_);
+         available(),
+         connected_,
+         tcp_client_.canSend(),
+         tx_bytes_,
+         rx_bytes_);
       ESP_LOGW(TAG,
          "'%s' STALL %u ms -> reconnect",
          name_.c_str(),
          (unsigned) since_last_rx);
+      
+      uint32_t now = millis();
+      ESP_LOGW(TAG,
+         "'%s' STALL: last RX %u ms ago, last TX %u ms ago",
+         name_.c_str(),
+         (unsigned)(now - last_rx_byte_time_),
+         (unsigned)(now - last_tx_byte_time_));
+      ESP_LOGW(TAG,
+         "Counters: TX=%lu pkts/%llu B RX=%lu pkts/%llu B",
+         (unsigned long)tx_packets_,
+         (unsigned long long)tx_bytes_,
+         (unsigned long)rx_packets_,
+         (unsigned long long)rx_bytes_);
       disconnect_();
       ring_.clear();
       has_peek_ = false;
@@ -172,6 +187,7 @@ void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
   if (written > 0) {
     tx_packets_++;
     tx_bytes_ += written;
+    last_tx_byte_time_ = millis();
   }
 }
 
