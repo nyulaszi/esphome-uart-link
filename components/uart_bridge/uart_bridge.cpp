@@ -60,37 +60,37 @@ void UARTBridge::setup() {
 
 void UARTBridge::loop() {
   // Fan-in: read from all reader members → rx ring + writer members
-  for (auto &src : members_) {
+  for (size_t src_idx = 0; src_idx < members_.size(); src_idx++) {
+    auto &src = members_[src_idx];
     if (!src.reader() || !src.uart)
       continue;
 
     while (src.uart->available()) {
       size_t n = std::min((size_t) src.uart->available(), buffer_.size());
-      if (!src.uart->read_array(buffer_.data(), n))
-        break;
-      
-      const char *src_name = src.uart->get_name().empty() ? "(no id)" : src.uart->get_name().c_str();
 
       ESP_LOGV(TAG,
-          "Bridge RX from %s: %u bytes",
-          src_name,
-          (unsigned)n);
+              "Bridge RX from member %u: %u bytes",
+              (unsigned) src_idx,
+              (unsigned) n);
+      
+      if (!src.uart->read_array(buffer_.data(), n))
+        break;
+
       // Write to internal ring for consumer reads
       rx_ring_.write(buffer_.data(), n);
 
       // Fan out to all writer members except the source
-      for (auto &dst : members_) {
+      for (size_t dst_idx = 0; dst_idx < members_.size(); dst_idx++) {
+        auto &dst = members_[dst_idx];
+
         if (&dst == &src || !dst.writer() || !dst.uart)
           continue;
 
-      const char *dst_name = dst.uart->get_name().empty() ? "(no id)" : dst.uart->get_name().c_str();
-
-      ESP_LOGV(TAG,
-            "Bridge TX %s -> %s : %u bytes",
-            src_name,
-            dst_name,
-            (unsigned)n);
-
+        ESP_LOGV(TAG,
+                "Bridge TX member %u -> member %u: %u bytes",
+                (unsigned) src_idx,
+                (unsigned) dst_idx,
+                (unsigned) n);
         dst.uart->write_array(buffer_.data(), n);
         dst.uart->flush();
       }
