@@ -198,6 +198,9 @@ void UARTTCPClientComponent::dump_config() {
 // ---- UARTComponent overrides ----
 
 void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
+  ESP_LOGV(TAG,
+         "TX cmd=%02X %02X %02X %02X",
+         data[0], data[1], data[2], data[3]);
   if (!connected_) {
     ESP_LOGD(TAG, "'%s' write_array: not connected, dropping %u bytes",
              name_.empty() ? "(no id)" : name_.c_str(), (unsigned) len);
