@@ -204,9 +204,11 @@ void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
     return;
   }
   ESP_LOGVV(TAG,
-          "'%s' TCP write %u bytes",
-          this->name_.c_str(),
-          (unsigned) len);
+          "'%s' TCP write %u bytes (connected=%d canSend=%d)",
+          name_.c_str(),
+          (unsigned)len,
+          connected_,
+          tcp_client_.canSend());
   size_t written = tcp_client_.write((const char *) data, len);
   ESP_LOGVV(TAG,
           "'%s' TCP write returned %u",
