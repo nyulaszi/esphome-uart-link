@@ -65,6 +65,14 @@ void UARTBridge::loop() {
     if (!src.reader() || !src.uart)
       continue;
 
+    int avail = src.uart->available();
+    if (avail > 0) {
+      ESP_LOGV(TAG,
+               "member %u available=%d",
+               (unsigned)(&src - &members_[0]),
+               avail);
+    }
+
     while (src.uart->available()) {
       size_t n = std::min((size_t) src.uart->available(), buffer_.size());
 
