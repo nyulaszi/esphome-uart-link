@@ -105,10 +105,9 @@ void UARTTCPClientComponent::loop() {
       last_dbg = now;
     
       ESP_LOGVV(TAG,
-                "'%s' alive: connected=%d available=%u last_rx=%u last_tx=%u",
+                "'%s' alive: connected=%d last_rx=%u last_tx=%u",
                 name_.c_str(),
                 connected_,
-                (unsigned) tcp_client_.available(),
                 (unsigned) (now - last_rx_ms_),
                 (unsigned) (now - last_tx_ms_));
     }
@@ -148,20 +147,16 @@ void UARTTCPClientComponent::loop() {
          (unsigned long)rx_packets_,
          (unsigned long long)rx_bytes_);
       ESP_LOGW(TAG,
-         "'%s' reconnect reason:"
-         " connected=%d"
-         " available=%u"
+         "'%s' reconnect:"
          " last_rx=%u"
          " last_tx=%u"
          " tx_pkts=%lu"
          " rx_pkts=%lu",
          name_.c_str(),
-         connected_,
-         (unsigned) tcp_client_.available(),
-         (unsigned) (millis() - last_rx_ms_),
-         (unsigned) (millis() - last_tx_ms_),
-         (unsigned long) tx_packets_,
-         (unsigned long) rx_packets_);      
+         (unsigned)(millis() - last_rx_ms_),
+         (unsigned)(millis() - last_tx_ms_),
+         (unsigned long)tx_packets_,
+         (unsigned long)rx_packets_);   
       disconnect_();
       ring_.clear();
       has_peek_ = false;
@@ -229,6 +224,7 @@ void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
     tx_packets_++;
     tx_bytes_ += written;
     last_tx_byte_time_ = millis();
+    last_tx_ms_ = millis();
   }
 }
 
