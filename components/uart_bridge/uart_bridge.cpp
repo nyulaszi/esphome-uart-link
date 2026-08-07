@@ -68,7 +68,13 @@ void UARTBridge::loop() {
       size_t n = std::min((size_t) src.uart->available(), buffer_.size());
       if (!src.uart->read_array(buffer_.data(), n))
         break;
+      
+      const char *src_name = src.uart->get_name().empty() ? "(no id)" : src.uart->get_name().c_str();
 
+      ESP_LOGV(TAG,
+          "Bridge RX from %s: %u bytes",
+          src_name,
+          (unsigned)n);
       // Write to internal ring for consumer reads
       rx_ring_.write(buffer_.data(), n);
 
@@ -76,6 +82,15 @@ void UARTBridge::loop() {
       for (auto &dst : members_) {
         if (&dst == &src || !dst.writer() || !dst.uart)
           continue;
+
+      const char *dst_name = dst.uart->get_name().empty() ? "(no id)" : dst.uart->get_name().c_str();
+
+      ESP_LOGV(TAG,
+            "Bridge TX %s -> %s : %u bytes",
+            src_name,
+            dst_name,
+            (unsigned)n);
+
         dst.uart->write_array(buffer_.data(), n);
         dst.uart->flush();
       }
