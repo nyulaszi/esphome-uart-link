@@ -32,13 +32,16 @@ void UARTTCPClientComponent::setup() {
   tcp_client_.onData(
       [](void *arg, AsyncClient *client, void *data, size_t len) {
         auto *self = static_cast<UARTTCPClientComponent *>(arg);
+        ESP_LOGVV(TAG,
+            "'%s' RX callback: %u bytes",
+            this->name_.c_str(),
+            (unsigned) len);
         self->ring_.write(static_cast<uint8_t *>(data), len);
-        ESP_LOGVV(TAG, "'%s' RX %u bytes",
-          self->name_.c_str(),
-          (unsigned) len);
+
         self->last_rx_byte_time_ = millis();
         self->rx_packets_++;
         self->rx_bytes_ += len;
+        self->last_rx_ms_ = millis();
       },
       this);
 
@@ -94,6 +97,21 @@ void UARTTCPClientComponent::loop() {
 
   // Stall detection
   if (connected_ && last_rx_byte_time_ > 0 && stall_timeout_ms_ > 0) {
+    static uint32_t last_dbg = 0;
+
+    uint32_t now = millis();
+    
+    if (now - last_dbg > 5000) {
+      last_dbg = now;
+    
+      ESP_LOGVV(TAG,
+                "'%s' alive: connected=%d available=%u last_rx=%u last_tx=%u",
+                name_.c_str(),
+                connected_,
+                (unsigned) tcp_client_.available(),
+                (unsigned) (now - last_rx_ms_),
+                (unsigned) (now - last_tx_ms_));
+    }
     uint32_t since_last_rx = millis() - last_rx_byte_time_;
     ESP_LOGVV(TAG,
           "'%s' idle=%u ms connected=%d available=%u",
@@ -129,6 +147,21 @@ void UARTTCPClientComponent::loop() {
          (unsigned long long)tx_bytes_,
          (unsigned long)rx_packets_,
          (unsigned long long)rx_bytes_);
+      ESP_LOGW(TAG,
+         "'%s' reconnect reason:"
+         " connected=%d"
+         " available=%u"
+         " last_rx=%u"
+         " last_tx=%u"
+         " tx_pkts=%lu"
+         " rx_pkts=%lu",
+         name_.c_str(),
+         connected_,
+         (unsigned) tcp_client_.available(),
+         (unsigned) (millis() - last_rx_ms_),
+         (unsigned) (millis() - last_tx_ms_),
+         (unsigned long) tx_packets_,
+         (unsigned long) rx_packets_);      
       disconnect_();
       ring_.clear();
       has_peek_ = false;
@@ -175,7 +208,15 @@ void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
              name_.empty() ? "(no id)" : name_.c_str(), (unsigned) len);
     return;
   }
+  ESP_LOGVV(TAG,
+          "'%s' TCP write %u bytes",
+          this->name_.c_str(),
+          (unsigned) len);
   size_t written = tcp_client_.write((const char *) data, len);
+  ESP_LOGVV(TAG,
+          "'%s' TCP write returned %u",
+          this->name_.c_str(),
+          (unsigned) written);
   ESP_LOGVV(TAG, "'%s' TX %u bytes (written=%u)",
           this->name_.c_str(),
           (unsigned) len,
