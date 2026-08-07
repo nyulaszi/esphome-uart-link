@@ -34,7 +34,7 @@ void UARTTCPClientComponent::setup() {
         auto *self = static_cast<UARTTCPClientComponent *>(arg);
         ESP_LOGVV(TAG,
             "'%s' RX callback: %u bytes",
-            this->name_.c_str(),
+            self->name_.c_str(),
             (unsigned) len);
         self->ring_.write(static_cast<uint8_t *>(data), len);
 
