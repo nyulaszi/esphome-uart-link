@@ -112,12 +112,12 @@ void UARTTCPClientComponent::loop() {
                 (unsigned) (now - last_tx_ms_));
     }
     uint32_t since_last_rx = millis() - last_rx_byte_time_;
-    ESP_LOGVV(TAG,
-          "'%s' idle=%u ms connected=%d available=%u",
-          name_.c_str(),
-          (unsigned) since_last_rx,
-          connected_,
-          available());
+    //ESP_LOGVV(TAG,
+    //      "'%s' idle=%u ms connected=%d available=%u",
+    //     name_.c_str(),
+    //      (unsigned) since_last_rx,
+    //      connected_,
+    //      available());
     if (since_last_rx > stall_timeout_ms_) {
       ESP_LOGW(TAG, "'%s' no data for %ums (stall), forcing reconnect",
                name_.empty() ? "(no id)" : name_.c_str(), (unsigned) since_last_rx);
