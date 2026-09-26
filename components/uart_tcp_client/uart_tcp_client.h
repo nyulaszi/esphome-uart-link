@@ -73,6 +73,12 @@ class UARTTCPClientComponent : public uart::UARTComponent, public Component {
   uint32_t last_tx_byte_time_{0};
   uint32_t last_tx_ms_{0};
   uint32_t last_rx_ms_{0};
+
+  // Request/response debugging
+  uint32_t request_count_{0};
+  uint32_t response_count_{0};
+  uint32_t last_request_time_{0};
+  bool waiting_for_response_{false};
 };
 
 }  // namespace esphome::uart_tcp_client
