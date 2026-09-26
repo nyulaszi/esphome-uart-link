@@ -32,16 +32,37 @@ void UARTTCPClientComponent::setup() {
   tcp_client_.onData(
       [](void *arg, AsyncClient *client, void *data, size_t len) {
         auto *self = static_cast<UARTTCPClientComponent *>(arg);
+
+        uint32_t now = millis();
+
         ESP_LOGVV(TAG,
-            "'%s' RX callback: %u bytes",
-            self->name_.c_str(),
-            (unsigned) len);
+                  "'%s' RX callback: %u bytes",
+                  self->name_.c_str(),
+                  (unsigned) len);
+
+        if (self->waiting_for_response_) {
+          ESP_LOGV(TAG,
+                   "'%s' RESPONSE #%lu: %u bytes, %lu ms after request",
+                   self->name_.c_str(),
+                   (unsigned long) self->request_count_,
+                   (unsigned) len,
+                   (unsigned long) (now - self->last_request_time_));
+
+          self->response_count_++;
+          self->waiting_for_response_ = false;
+        } else {
+          ESP_LOGV(TAG,
+                   "'%s' RX without pending request: %u bytes",
+                   self->name_.c_str(),
+                   (unsigned) len);
+        }
+
         self->ring_.write(static_cast<uint8_t *>(data), len);
 
-        self->last_rx_byte_time_ = millis();
+        self->last_rx_byte_time_ = now;
         self->rx_packets_++;
         self->rx_bytes_ += len;
-        self->last_rx_ms_ = millis();
+        self->last_rx_ms_ = now;
       },
       this);
 
@@ -136,10 +157,14 @@ void UARTTCPClientComponent::loop() {
       
       uint32_t now = millis();
       ESP_LOGW(TAG,
-         "'%s' STALL: last RX %u ms ago, last TX %u ms ago",
+         "'%s' STALL: last RX %u ms ago, last TX %u ms ago, pending=%d, "
+         "request #%lu, response #%lu",
          name_.c_str(),
          (unsigned)(now - last_rx_byte_time_),
-         (unsigned)(now - last_tx_byte_time_));
+         (unsigned)(now - last_tx_byte_time_),
+         waiting_for_response_,
+         (unsigned long) request_count_,
+         (unsigned long) response_count_);
       ESP_LOGW(TAG,
          "Counters: TX=%lu pkts/%llu B RX=%lu pkts/%llu B",
          (unsigned long)tx_packets_,
@@ -226,10 +251,22 @@ void UARTTCPClientComponent::write_array(const uint8_t *data, size_t len) {
              name_.empty() ? "(no id)" : name_.c_str(), (unsigned) written, (unsigned) len);
   }
   if (written > 0) {
+    uint32_t now = millis();
+
     tx_packets_++;
     tx_bytes_ += written;
-    last_tx_byte_time_ = millis();
-    last_tx_ms_ = millis();
+    last_tx_byte_time_ = now;
+    last_tx_ms_ = now;
+
+    request_count_++;
+    last_request_time_ = now;
+    waiting_for_response_ = true;
+
+    ESP_LOGV(TAG,
+             "'%s' REQUEST #%lu sent: %u bytes",
+             name_.c_str(),
+             (unsigned long) request_count_,
+             (unsigned) written);
   }
 }
 
