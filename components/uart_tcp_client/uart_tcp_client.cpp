@@ -209,7 +209,7 @@ void UARTTCPClientComponent::loop() {
     tcp_client_.close();
     connecting_ = false;
   }
-  yield();
+  delay(1);
 }
 
 void UARTTCPClientComponent::dump_config() {
