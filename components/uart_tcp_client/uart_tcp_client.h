@@ -73,6 +73,7 @@ class UARTTCPClientComponent : public uart::UARTComponent, public Component {
   uint32_t last_tx_byte_time_{0};
   uint32_t last_tx_ms_{0};
   uint32_t last_rx_ms_{0};
+  uint32_t tx_packets_at_last_rx_{0};
 
   // Request/response debugging
   uint32_t request_count_{0};
