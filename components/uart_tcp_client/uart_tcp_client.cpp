@@ -220,9 +220,10 @@ void UARTTCPClientComponent::loop() {
   if (millis() - last_test >= 10) {
     last_test = millis();
 
-  volatile uint32_t dummy = 0;
-  for (uint32_t i = 0; i < 5000; i++) {
-    dummy += i;
+    volatile uint32_t dummy = 0;
+    for (uint32_t i = 0; i < 5000; i++) {
+      dummy += i;
+    }
   }
 }
 
