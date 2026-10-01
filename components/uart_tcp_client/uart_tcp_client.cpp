@@ -209,7 +209,15 @@ void UARTTCPClientComponent::loop() {
     tcp_client_.close();
     connecting_ = false;
   }
-  delay(5);
+  static uint32_t last_test = 0;
+
+  if (millis() - last_test >= 10) {
+    last_test = millis();
+
+  volatile uint32_t dummy = 0;
+  for (uint32_t i = 0; i < 5000; i++) {
+    dummy += i;
+  }
 }
 
 void UARTTCPClientComponent::dump_config() {
