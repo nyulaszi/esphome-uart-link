@@ -63,6 +63,7 @@ void UARTTCPClientComponent::setup() {
         self->rx_packets_++;
         self->rx_bytes_ += len;
         self->last_rx_ms_ = now;
+        self->tx_packets_at_last_rx_ = self->tx_packets_;
       },
       this);
 
@@ -122,16 +123,16 @@ void UARTTCPClientComponent::loop() {
 
     uint32_t now = millis();
     
-    if (now - last_dbg > 5000) {
-      last_dbg = now;
+//    if (now - last_dbg > 5000) {
+//      last_dbg = now;
     
-      ESP_LOGVV(TAG,
-                "'%s' alive: connected=%d last_rx=%u last_tx=%u",
-                name_.c_str(),
-                connected_,
-                (unsigned) (now - last_rx_ms_),
-                (unsigned) (now - last_tx_ms_));
-    }
+//      ESP_LOGVV(TAG,
+//                "'%s' alive: connected=%d last_rx=%u last_tx=%u",
+//                name_.c_str(),
+//                connected_,
+//                (unsigned) (now - last_rx_ms_),
+//                (unsigned) (now - last_tx_ms_));
+//    }
     uint32_t since_last_rx = millis() - last_rx_byte_time_;
     //ESP_LOGVV(TAG,
     //      "'%s' idle=%u ms connected=%d available=%u",
@@ -171,6 +172,11 @@ void UARTTCPClientComponent::loop() {
          (unsigned long long)tx_bytes_,
          (unsigned long)rx_packets_,
          (unsigned long long)rx_bytes_);
+      ESP_LOGW(TAG,
+         "Since last RX: TX packets=%lu, TX packets at last RX=%lu, TX since last RX=%lu",
+         (unsigned long)tx_packets_,
+         (unsigned long)tx_packets_at_last_rx_,
+         (unsigned long)(tx_packets_ - tx_packets_at_last_rx_));
       ESP_LOGW(TAG,
          "'%s' reconnect:"
          " last_rx=%u"
